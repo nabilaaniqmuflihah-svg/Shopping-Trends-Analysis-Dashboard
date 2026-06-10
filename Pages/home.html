@@ -1,0 +1,286 @@
+<style>
+.home-hero{background:linear-gradient(135deg,var(--navy2) 0%,var(--navy3) 100%);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.home-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(59,158,255,0.06);pointer-events:none}
+.home-hero h3{font-family:var(--font-display);font-size:22px;color:var(--text);margin-bottom:6px}
+.home-hero p{font-size:13px;color:var(--text2);line-height:1.6;max-width:460px}
+.hero-stats{display:flex;gap:16px;margin-top:14px}
+.hero-stat-val{font-size:18px;font-weight:500}
+.hero-stat-label{font-size:10px;color:var(--text2)}
+.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.quick-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.15s}
+.quick-card:hover{border-color:rgba(59,158,255,0.3);background:rgba(59,158,255,0.05)}
+.quick-card h4{font-size:13px;font-weight:500;color:var(--text);margin:8px 0 4px}
+.quick-card p{font-size:11px;color:var(--text2);line-height:1.5}
+.quick-icon{font-size:22px}
+.loading-stats{display:flex;gap:16px;margin-top:14px;opacity:0.7}
+.loading-placeholder{width:80px;height:36px;background:rgba(255,255,255,0.05);border-radius:8px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}
+.empty-message{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:40px 20px;text-align:center;margin:20px auto;max-width:400px}
+.empty-message i{font-size:48px;color:var(--text3);margin-bottom:16px;display:block}
+.empty-message h4{color:var(--text2);font-size:16px;margin-bottom:8px}
+.empty-message p{color:var(--text3);font-size:13px}
+</style>
+
+<div class="home-hero">
+  <h3>Shopping Trends Analysis</h3>
+  <p>Dashboard ini menganalisis pola belanja dari <span id="total-customers">...</span> pelanggan meliputi ringkasan transaksi, karakteristik pelanggan, produk terlaris, serta geografis dan pengiriman.</p>
+  <div id="hero-stats-container">
+    <div class="loading-stats">
+      <div class="loading-placeholder"></div>
+      <div class="loading-placeholder"></div>
+      <div class="loading-placeholder"></div>
+      <div class="loading-placeholder"></div>
+    </div>
+  </div>
+</div>
+
+<div class="quick-grid">
+  <div class="quick-card" onclick="window.goTo('overview')">
+    <div class="quick-icon" style="color:var(--accent)"><i class="ti ti-chart-pie"></i></div>
+    <h4>Overview</h4>
+    <p>Pendapatan per kategori, distribusi musiman, dan metode pembayaran</p>
+  </div>
+  <div class="quick-card" onclick="window.goTo('pelanggan')">
+    <div class="quick-icon" style="color:var(--accent2)"><i class="ti ti-users"></i></div>
+    <h4>Analisis Pelanggan</h4>
+    <p>Demografi usia, gender, dan frekuensi pembelian</p>
+  </div>
+  <div class="quick-card" onclick="window.goTo('produk')">
+    <div class="quick-icon" style="color:var(--accent3)"><i class="ti ti-shirt"></i></div>
+    <h4>Analisis Produk</h4>
+    <p>Produk terlaris, kategori, warna, dan ukuran favorit</p>
+  </div>
+  <div class="quick-card" onclick="window.goTo('geografis')">
+    <div class="quick-icon" style="color:#a78bfa"><i class="ti ti-map-pin"></i></div>
+    <h4>Geografis dan Pengiriman</h4>
+    <p>Distribusi transaksi per wilayah & metode pengiriman</p>
+  </div>
+  <div class="quick-card" onclick="window.goTo('manajemen')">
+    <div class="quick-icon" style="color:#00d4a0"><i class="ti ti-database"></i></div>
+    <h4>Manajemen Data</h4>
+    <p>Tambah, edit, atau hapus data pelanggan dan transaksi</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // PATH YANG BENAR - CSV di root (sejajar dengan folder Pages)
+  const CSV_FILE = 'shopping_trends_updated.csv';
+  
+  function showEmptyMessage() {
+    const statsContainer = document.getElementById('hero-stats-container');
+    if (statsContainer) {
+      statsContainer.innerHTML = `
+        <div class="empty-message">
+          <i class="ti ti-database"></i>
+          <h4>Belum Ada Data</h4>
+          <p>Pastikan file <strong>shopping_trends_updated.csv</strong><br>berada di folder yang sama dengan file ini.</p>
+        </div>
+      `;
+    }
+    const totalSpan = document.getElementById('total-customers');
+    if (totalSpan) totalSpan.textContent = '?';
+  }
+  
+  function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    
+    const idx = {
+      amount: headers.indexOf('Purchase Amount (USD)'),
+      rating: headers.indexOf('Review Rating'),
+      subscription: headers.indexOf('Subscription Status')
+    };
+    
+    let totalRevenue = 0;
+    let totalRating = 0;
+    let subscriberCount = 0;
+    let rowCount = 0;
+    
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      
+      let line = lines[i];
+      let cols = [];
+      let inQuote = false;
+      let current = '';
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuote = !inQuote;
+        } else if (char === ',' && !inQuote) {
+          cols.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      cols.push(current.trim());
+      
+      const amount = parseFloat(cols[idx.amount]) || 0;
+      const rating = parseFloat(cols[idx.rating]) || 0;
+      const subscription = cols[idx.subscription] || '';
+      
+      totalRevenue += amount;
+      totalRating += rating;
+      if (subscription === 'Yes') subscriberCount++;
+      rowCount++;
+    }
+    
+    return {
+      totalTransactions: rowCount,
+      totalRevenue: totalRevenue,
+      avgRating: rowCount > 0 ? (totalRating / rowCount).toFixed(2) : 0,
+      subscriberPct: rowCount > 0 ? ((subscriberCount / rowCount) * 100).toFixed(0) : 0,
+      avgPerTransaction: rowCount > 0 ? (totalRevenue / rowCount).toFixed(2) : 0
+    };
+  }
+  
+  function parseCSVLine(line) {
+    const result = [];
+    let inQuotes = false;
+    let current = '';
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else current += char;
+    }
+    result.push(current.trim());
+    return result;
+  }
+  
+  function updateDashboardData(stats) {
+    const totalCustomersSpan = document.getElementById('total-customers');
+    if (totalCustomersSpan) {
+      totalCustomersSpan.textContent = stats.totalTransactions.toLocaleString('id-ID');
+    }
+    
+    const revenueDisplay = stats.totalRevenue >= 1000000 
+      ? `$${(stats.totalRevenue / 1000000).toFixed(1)}M`
+      : `$${(stats.totalRevenue / 1000).toFixed(0)}K`;
+    
+    const statsContainer = document.getElementById('hero-stats-container');
+    if (statsContainer) {
+      statsContainer.innerHTML = `
+        <div class="hero-stats">
+          <div><div class="hero-stat-val" style="color:var(--accent)">${revenueDisplay}</div><div class="hero-stat-label">Total Pendapatan</div></div>
+          <div><div class="hero-stat-val" style="color:var(--accent2)">${stats.avgRating}</div><div class="hero-stat-label">Rata-rata Rating</div></div>
+          <div><div class="hero-stat-val" style="color:var(--accent3)">${stats.subscriberPct}%</div><div class="hero-stat-label">Member</div></div>
+          <div><div class="hero-stat-val" style="color:#a78bfa">$${stats.avgPerTransaction}</div><div class="hero-stat-label">Rata-rata/Transaksi</div></div>
+        </div>
+      `;
+    }
+    
+    console.log(`✅ Home: Data diperbarui: ${stats.totalTransactions} transaksi`);
+  }
+  
+  async function loadData() {
+    // Cek localStorage dulu
+    const stored = localStorage.getItem('shopInsightRealData');
+    if (stored && stored !== 'undefined' && stored !== 'null') {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          const totalRevenue = parsed.reduce((sum, row) => sum + (row["Purchase Amount (USD)"] || 0), 0);
+          const totalRating = parsed.reduce((sum, row) => sum + (row["Review Rating"] || 0), 0);
+          const subscriberCount = parsed.filter(row => row["Subscription Status"] === "Yes").length;
+          
+          const stats = {
+            totalTransactions: parsed.length,
+            totalRevenue: totalRevenue,
+            avgRating: parsed.length > 0 ? (totalRating / parsed.length).toFixed(2) : 0,
+            subscriberPct: parsed.length > 0 ? ((subscriberCount / parsed.length) * 100).toFixed(0) : 0,
+            avgPerTransaction: parsed.length > 0 ? (totalRevenue / parsed.length).toFixed(2) : 0
+          };
+          updateDashboardData(stats);
+          console.log(`✅ Home: Load ${parsed.length} data dari localStorage`);
+          return;
+        }
+      } catch(e) {
+        console.log('Gagal parse localStorage:', e);
+      }
+    }
+    
+    // Jika tidak ada di localStorage, coba load dari CSV
+    try {
+      console.log('📁 Home: Mencoba load CSV dari:', CSV_FILE);
+      const response = await fetch(CSV_FILE);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const csvText = await response.text();
+      
+      // Parse CSV ke array of objects
+      const lines = csvText.trim().split(/\r?\n/);
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((header, idx) => {
+          let val = values[idx] || '';
+          if (header === "Age" || header === "Previous Purchases") val = parseInt(val) || 0;
+          else if (header === "Purchase Amount (USD)" || header === "Review Rating") val = parseFloat(val) || 0;
+          row[header] = val;
+        });
+        data.push(row);
+      }
+      
+      // Simpan ke localStorage
+      localStorage.setItem('shopInsightRealData', JSON.stringify(data));
+      console.log(`✅ Home: CSV loaded, ${data.length} data disimpan ke localStorage`);
+      
+      const totalRevenue = data.reduce((sum, row) => sum + (row["Purchase Amount (USD)"] || 0), 0);
+      const totalRating = data.reduce((sum, row) => sum + (row["Review Rating"] || 0), 0);
+      const subscriberCount = data.filter(row => row["Subscription Status"] === "Yes").length;
+      
+      const stats = {
+        totalTransactions: data.length,
+        totalRevenue: totalRevenue,
+        avgRating: data.length > 0 ? (totalRating / data.length).toFixed(2) : 0,
+        subscriberPct: data.length > 0 ? ((subscriberCount / data.length) * 100).toFixed(0) : 0,
+        avgPerTransaction: data.length > 0 ? (totalRevenue / data.length).toFixed(2) : 0
+      };
+      updateDashboardData(stats);
+      
+    } catch (error) {
+      console.error('Gagal load CSV:', error);
+      showEmptyMessage();
+    }
+  }
+  
+  // Refresh dashboard dari halaman lain
+  window.refreshDashboardData = function() {
+    console.log('🔄 Home: Refresh dashboard...');
+    return loadData();
+  };
+  
+  // Auto-sync dengan storage event
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'shopInsightRealData' || e.key === 'forceDashboardRefresh') {
+      console.log('🔄 Home: Storage change detected, reloading...');
+      loadData();
+    }
+  });
+  
+  // Load data awal
+  loadData();
+  
+  // Periodic check (opsional)
+  let lastDataLength = localStorage.getItem('shopInsightRealData')?.length || 0;
+  setInterval(() => {
+    const currentLength = localStorage.getItem('shopInsightRealData')?.length || 0;
+    if (currentLength !== lastDataLength) {
+      lastDataLength = currentLength;
+      console.log('🔄 Home: Auto-detected data change, reloading...');
+      loadData();
+    }
+  }, 3000);
+  
+})();
+</script>

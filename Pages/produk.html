@@ -1,0 +1,520 @@
+<style>
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.metric-icon{font-size:18px;margin-bottom:8px}
+.metric-val{font-size:22px;font-weight:500;color:var(--text)}
+.metric-label{font-size:11px;color:var(--text2);margin-top:2px}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.metric.accent-blue .metric-icon{color:var(--accent)}
+.metric.accent-green .metric-icon{color:var(--accent2)}
+.metric.accent-orange .metric-icon{color:var(--accent3)}
+.metric.accent-purple .metric-icon{color:#a78bfa}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px}
+.product-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.prod-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center}
+.prod-rank{font-size:10px;color:var(--text3);margin-bottom:4px}
+.prod-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px}
+.prod-pct{font-size:16px;font-weight:500}
+.prod-rev{font-size:10px;color:var(--text2);margin-top:4px}
+.bar-list{display:flex;flex-direction:column;gap:7px}
+.bar-item{display:flex;align-items:center;gap:8px;font-size:11px}
+.bar-label{width:90px;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-track{flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{width:50px;color:var(--text2);font-size:10px}
+.toggle-btn{flex:1;padding:8px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font-body);transition:all 0.15s}
+.toggle-btn.active-blue{border:1px solid rgba(59,158,255,0.4);background:rgba(59,158,255,0.1);color:var(--accent)}
+.toggle-btn.active-green{border:1px solid rgba(0,212,160,0.4);background:rgba(0,212,160,0.1);color:var(--accent2)}
+.toggle-btn.inactive{border:1px solid var(--border);background:transparent;color:var(--text2)}
+.empty-message{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;padding:40px 20px;text-align:center;margin:40px auto;max-width:500px}
+.empty-message i{font-size:48px;color:var(--text3);margin-bottom:16px;display:block}
+.empty-message h4{color:var(--text2);font-size:16px;margin-bottom:8px}
+.empty-message p{color:var(--text3);font-size:13px}
+.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;visibility:hidden}
+.loading-overlay.active{visibility:visible}
+.loading-spinner{width:40px;height:40px;border:3px solid #1e2d3d;border-top-color:#3b9eff;border-radius:50%;animation:spin 1s linear infinite}
+</style>
+
+<div class="metrics">
+  <div class="metric accent-blue"><div class="metric-icon"><i class="ti ti-shirt"></i></div><div class="metric-val" id="topProdMember">-</div><div class="metric-label">Produk #1</div><div class="metric-sub">member</div></div>
+  <div class="metric accent-green"><div class="metric-icon"><i class="ti ti-shirt"></i></div><div class="metric-val" id="topProdNon">-</div><div class="metric-label">Produk #1</div><div class="metric-sub">non-member</div></div>
+  <div class="metric accent-orange"><div class="metric-icon"><i class="ti ti-palette"></i></div><div class="metric-val" id="dominantSize">-</div><div class="metric-label">Ukuran Dominan</div><div class="metric-sub" id="dominantSizePct">-</div></div>
+  <div class="metric accent-purple"><div class="metric-icon"><i class="ti ti-star"></i></div><div class="metric-val" id="topRating">-</div><div class="metric-label">Rating Tertinggi</div><div class="metric-sub" id="topRatingProduct">-</div></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:12px">
+  <button id="btnMember" class="toggle-btn active-blue">Member</button>
+  <button id="btnNonMember" class="toggle-btn inactive">Non-Member</button>
+</div>
+
+<div id="prodMember">
+  <div class="chart-title" style="margin-bottom:10px">Top 10 produk — Member</div>
+  <div class="product-row" id="topProdMemberList"></div>
+</div>
+
+<div id="prodNonMember" style="display:none">
+  <div class="chart-title" style="margin-bottom:10px">Top 10 produk — Non-Member</div>
+  <div class="product-row" id="topProdNonList"></div>
+</div>
+
+<div id="sizeColorContainer">
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Distribusi ukuran — <span id="sizeChartTitle">Member</span></div>
+      <div style="position:relative;height:200px"><canvas id="c_size"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Warna favorit — <span id="colorChartTitle">Member</span></div>
+      <div class="bar-list" id="colorList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<script>
+(function() {
+  let currentView = 'member';
+  let sizeChart;
+  
+  const colorMapping = {
+    "Black": "Hitam", "White": "Putih", "Red": "Merah", "Blue": "Biru",
+    "Green": "Hijau", "Yellow": "Kuning", "Purple": "Ungu", "Pink": "Merah Muda",
+    "Brown": "Coklat", "Gray": "Abu-abu", "Grey": "Abu-abu", "Orange": "Oranye",
+    "Navy": "Biru Tua", "Maroon": "Merah Marun", "Beige": "Krem", "Cyan": "Cyan",
+    "Magenta": "Magenta", "Lavender": "Lavender", "Olive": "Olive", "Coral": "Koral",
+    "Teal": "Teal", "Gold": "Gold", "Silver": "Silver", "Bronze": "Bronze"
+  };
+  
+  function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      if (show) overlay.classList.add('active');
+      else overlay.classList.remove('active');
+    }
+  }
+  
+  function showEmptyMessage() {
+    showLoading(false);
+    
+    // Sembunyikan semua konten utama
+    const mainContent = document.querySelectorAll('.metrics, #prodMember, #prodNonMember, #sizeColorContainer, .toggle-btn');
+    mainContent.forEach(el => {
+      if (el) el.style.display = 'none';
+    });
+    
+    // Hapus pesan kosong yang sudah ada
+    const existingEmpty = document.getElementById('emptyMessage');
+    if (existingEmpty) existingEmpty.remove();
+    
+    // Tampilkan pesan kosong
+    const container = document.querySelector('.metrics');
+    if (container && container.parentNode) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty-message';
+      emptyDiv.id = 'emptyMessage';
+      emptyDiv.innerHTML = `
+        <i class="ti ti-database"></i>
+        <h4>Belum Ada Data</h4>
+        <p>Pastikan file <strong>shopping_trends_updated.csv</strong><br>berada di folder yang sama.</p>
+      `;
+      container.parentNode.insertBefore(emptyDiv, container);
+    }
+  }
+  
+  function removeEmptyMessage() {
+    const existingEmpty = document.getElementById('emptyMessage');
+    if (existingEmpty) existingEmpty.remove();
+    
+    const mainContent = document.querySelectorAll('.metrics, #prodMember, #prodNonMember, #sizeColorContainer, .toggle-btn');
+    mainContent.forEach(el => {
+      if (el) el.style.display = '';
+    });
+  }
+  
+  function formatCurrency(value) {
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
+    return `$${value.toFixed(0)}`;
+  }
+  
+  // Fungsi untuk load data dari CSV (fallback jika localStorage kosong)
+  async function loadCSVFallback() {
+    try {
+      console.log('📁 Produk: Mencoba load CSV...');
+      const response = await fetch('shopping_trends_updated.csv');
+      if (!response.ok) throw new Error('CSV tidak ditemukan');
+      const csvText = await response.text();
+      
+      // Parse CSV
+      const lines = csvText.trim().split(/\r?\n/);
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((header, idx) => {
+          let val = values[idx] || '';
+          if (header === "Age" || header === "Previous Purchases") val = parseInt(val) || 0;
+          else if (header === "Purchase Amount (USD)" || header === "Review Rating") val = parseFloat(val) || 0;
+          row[header] = val;
+        });
+        data.push(row);
+      }
+      
+      // Simpan ke localStorage agar halaman lain bisa akses
+      localStorage.setItem('shopInsightRealData', JSON.stringify(data));
+      console.log(`✅ Produk: CSV loaded: ${data.length} data`);
+      return data;
+      
+    } catch (error) {
+      console.error('Failed to load CSV:', error);
+      return null;
+    }
+  }
+  
+  function parseCSVLine(line) {
+    const result = [];
+    let inQuotes = false;
+    let current = '';
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else current += char;
+    }
+    result.push(current.trim());
+    return result;
+  }
+  
+  async function loadData() {
+    showLoading(true);
+    removeEmptyMessage();
+    
+    try {
+      let rawData = localStorage.getItem('shopInsightRealData');
+      let data = null;
+      
+      if (!rawData || rawData === 'undefined' || rawData === 'null') {
+        // Jika localStorage kosong, coba load dari CSV
+        console.log('📭 Produk: LocalStorage kosong, mencoba load CSV...');
+        data = await loadCSVFallback();
+        if (!data || data.length === 0) {
+          showEmptyMessage();
+          return;
+        }
+      } else {
+        data = JSON.parse(rawData);
+      }
+      
+      if (!data || data.length === 0) {
+        showEmptyMessage();
+        return;
+      }
+      
+      console.log(`✅ Produk: Load ${data.length} data`);
+      
+      const memberData = data.filter(row => row["Subscription Status"] === 'Yes');
+      const nonMemberData = data.filter(row => row["Subscription Status"] !== 'Yes');
+      
+      updateMetrics(data, memberData, nonMemberData);
+      updateTopProducts(memberData, nonMemberData);
+      updateSizeAndColor(memberData, nonMemberData);
+      
+      showLoading(false);
+      
+    } catch (error) {
+      console.error('Error:', error);
+      showEmptyMessage();
+    }
+  }
+  
+  function updateMetrics(data, memberData, nonMemberData) {
+    const memberProductCount = {};
+    memberData.forEach(row => {
+      const item = row["Item Purchased"];
+      if (item) memberProductCount[item] = (memberProductCount[item] || 0) + 1;
+    });
+    const topMember = Object.entries(memberProductCount).sort((a,b) => b[1] - a[1])[0];
+    if (topMember) document.getElementById('topProdMember').innerText = topMember[0];
+    
+    const nonProductCount = {};
+    nonMemberData.forEach(row => {
+      const item = row["Item Purchased"];
+      if (item) nonProductCount[item] = (nonProductCount[item] || 0) + 1;
+    });
+    const topNon = Object.entries(nonProductCount).sort((a,b) => b[1] - a[1])[0];
+    if (topNon) document.getElementById('topProdNon').innerText = topNon[0];
+    
+    const sizeCount = {};
+    data.forEach(row => {
+      const size = row["Size"];
+      if (size) sizeCount[size] = (sizeCount[size] || 0) + 1;
+    });
+    const topSize = Object.entries(sizeCount).sort((a,b) => b[1] - a[1])[0];
+    if (topSize) {
+      const pct = (topSize[1] / data.length * 100).toFixed(1);
+      document.getElementById('dominantSize').innerText = topSize[0];
+      document.getElementById('dominantSizePct').innerHTML = `~${pct}% semua segmen`;
+    }
+    
+    const productRating = {};
+    data.forEach(row => {
+      const item = row["Item Purchased"];
+      const rating = row["Review Rating"] || 0;
+      if (item && rating > 0) {
+        if (!productRating[item]) { productRating[item] = { sum: 0, count: 0 }; }
+        productRating[item].sum += rating;
+        productRating[item].count += 1;
+      }
+    });
+    let topRating = { product: '', avg: 0 };
+    for (const [product, vals] of Object.entries(productRating)) {
+      const avg = vals.sum / vals.count;
+      if (avg > topRating.avg) {
+        topRating = { product, avg };
+      }
+    }
+    if (topRating.product) {
+      document.getElementById('topRating').innerText = topRating.avg.toFixed(2);
+      document.getElementById('topRatingProduct').innerText = topRating.product;
+    }
+  }
+  
+  function updateTopProducts(memberData, nonMemberData) {
+    const memberStats = {};
+    memberData.forEach(row => {
+      const item = row["Item Purchased"];
+      const amount = row["Purchase Amount (USD)"] || 0;
+      const rating = row["Review Rating"] || 0;
+      if (item) {
+        if (!memberStats[item]) {
+          memberStats[item] = { count: 0, revenue: 0, ratingSum: 0, ratingCount: 0 };
+        }
+        memberStats[item].count++;
+        memberStats[item].revenue += amount;
+        if (rating > 0) {
+          memberStats[item].ratingSum += rating;
+          memberStats[item].ratingCount++;
+        }
+      }
+    });
+    
+    const memberTop = Object.entries(memberStats)
+      .sort((a,b) => b[1].count - a[1].count)
+      .slice(0, 10);
+    const memberTotal = memberData.length;
+    
+    const memberContainer = document.getElementById('topProdMemberList');
+    if (memberContainer) {
+      memberContainer.innerHTML = memberTop.map(([name, stats], i) => {
+        const pct = memberTotal > 0 ? (stats.count / memberTotal * 100).toFixed(1) : 0;
+        const avgRating = stats.ratingCount > 0 ? (stats.ratingSum / stats.ratingCount).toFixed(2) : '3.50';
+        return `
+          <div class="prod-card">
+            <div class="prod-rank">#${i+1}</div>
+            <div class="prod-name">${name}</div>
+            <div class="prod-pct" style="color:var(--accent)">${pct}%</div>
+            <div class="prod-rev">${formatCurrency(stats.revenue)} · ★${avgRating}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    const nonStats = {};
+    nonMemberData.forEach(row => {
+      const item = row["Item Purchased"];
+      const amount = row["Purchase Amount (USD)"] || 0;
+      const rating = row["Review Rating"] || 0;
+      if (item) {
+        if (!nonStats[item]) {
+          nonStats[item] = { count: 0, revenue: 0, ratingSum: 0, ratingCount: 0 };
+        }
+        nonStats[item].count++;
+        nonStats[item].revenue += amount;
+        if (rating > 0) {
+          nonStats[item].ratingSum += rating;
+          nonStats[item].ratingCount++;
+        }
+      }
+    });
+    
+    const nonTop = Object.entries(nonStats)
+      .sort((a,b) => b[1].count - a[1].count)
+      .slice(0, 10);
+    const nonTotal = nonMemberData.length;
+    
+    const nonContainer = document.getElementById('topProdNonList');
+    if (nonContainer) {
+      nonContainer.innerHTML = nonTop.map(([name, stats], i) => {
+        const pct = nonTotal > 0 ? (stats.count / nonTotal * 100).toFixed(1) : 0;
+        const avgRating = stats.ratingCount > 0 ? (stats.ratingSum / stats.ratingCount).toFixed(2) : '3.50';
+        return `
+          <div class="prod-card">
+            <div class="prod-rank">#${i+1}</div>
+            <div class="prod-name">${name}</div>
+            <div class="prod-pct" style="color:var(--accent2)">${pct}%</div>
+            <div class="prod-rev">${formatCurrency(stats.revenue)} · ★${avgRating}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  function updateSizeAndColor(memberData, nonMemberData) {
+    const targetData = currentView === 'member' ? memberData : nonMemberData;
+    const total = targetData.length;
+    const label = currentView === 'member' ? 'Member' : 'Non-Member';
+    
+    const sizeChartTitle = document.getElementById('sizeChartTitle');
+    const colorChartTitle = document.getElementById('colorChartTitle');
+    if (sizeChartTitle) sizeChartTitle.innerText = label;
+    if (colorChartTitle) colorChartTitle.innerText = label;
+    
+    const sizeCount = { S:0, M:0, L:0, XL:0, XXL:0 };
+    targetData.forEach(row => {
+      const size = row["Size"];
+      if (sizeCount.hasOwnProperty(size)) sizeCount[size]++;
+      else if (size === 'XS') sizeCount.S++;
+      else if (size === 'XLL') sizeCount.XL++;
+    });
+    
+    const sizeLabelsRaw = Object.keys(sizeCount).filter(s => sizeCount[s] > 0);
+    const sizeData = sizeLabelsRaw.map(s => total > 0 ? +(sizeCount[s] / total * 100).toFixed(1) : 0);
+    const sizeLabels = sizeLabelsRaw.map((s, i) => `${sizeData[i]}%`);
+    
+    const sizeCtx = document.getElementById('c_size');
+    if (sizeCtx) {
+      if (sizeChart) sizeChart.destroy();
+      sizeChart = new Chart(sizeCtx, {
+        type: 'doughnut',
+        data: { 
+          labels: sizeLabels, 
+          datasets: [{ 
+            data: sizeData, 
+            backgroundColor: ['#3b9eff', '#00d4a0', '#ff6b4a', '#a78bfa', '#f59e0b'], 
+            borderWidth: 0 
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          cutout: '60%',
+          plugins: { 
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}` } },
+            legend: { display: false }
+          } 
+        }
+      });
+    }
+    
+    const colorCount = {};
+    targetData.forEach(row => {
+      let color = row["Color"];
+      if (color && color !== '') {
+        color = colorMapping[color] || color;
+        colorCount[color] = (colorCount[color] || 0) + 1;
+      }
+    });
+    const topColors = Object.entries(colorCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const maxColorCount = topColors[0]?.[1] || 1;
+    
+    const colorContainer = document.getElementById('colorList');
+    if (colorContainer) {
+      colorContainer.innerHTML = topColors.map(([color, count]) => {
+        const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+        const percent = (count / maxColorCount) * 100;
+        const colorMap = {
+          'Hitam': '#1a1a1a', 'Putih': '#e0e0e0', 'Merah': '#e53935',
+          'Biru': '#1e88e5', 'Hijau': '#43a047', 'Kuning': '#fdd835',
+          'Ungu': '#8e24aa', 'Merah Muda': '#ec407a', 'Coklat': '#795548',
+          'Abu-abu': '#9e9e9e', 'Biru Tua': '#1a237e', 'Olive': '#558b2f',
+          'Teal': '#00897b', 'Silver': '#b0bec5', 'Gold': '#ffb300',
+          'Oranye': '#fb8c00', 'Krem': '#f5f5dc', 'Cyan': '#00bcd4',
+          'Magenta': '#e91e63', 'Lavender': '#e6e6fa', 'Koral': '#ff7f50',
+          'Bronze': '#cd7f32'
+        };
+        const barColor = colorMap[color] || '#3b9eff';
+        return `
+          <div class="bar-item">
+            <span class="bar-label">${color}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${percent}%;background:${barColor}"></div></div>
+            <span class="bar-val">${pct}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  function switchView(view) {
+    currentView = view;
+    const isMember = view === 'member';
+    
+    const prodMember = document.getElementById('prodMember');
+    const prodNonMember = document.getElementById('prodNonMember');
+    const btnMember = document.getElementById('btnMember');
+    const btnNonMember = document.getElementById('btnNonMember');
+    
+    if (prodMember) prodMember.style.display = isMember ? '' : 'none';
+    if (prodNonMember) prodNonMember.style.display = isMember ? 'none' : '';
+    if (btnMember) btnMember.className = `toggle-btn ${isMember ? 'active-blue' : 'inactive'}`;
+    if (btnNonMember) btnNonMember.className = `toggle-btn ${!isMember ? 'active-green' : 'inactive'}`;
+    
+    const rawData = localStorage.getItem('shopInsightRealData');
+    if (rawData) {
+      try {
+        const data = JSON.parse(rawData);
+        const memberData = data.filter(row => row["Subscription Status"] === 'Yes');
+        const nonMemberData = data.filter(row => row["Subscription Status"] !== 'Yes');
+        updateSizeAndColor(memberData, nonMemberData);
+      } catch(e) {}
+    }
+  }
+  
+  // Event listeners
+  const btnMember = document.getElementById('btnMember');
+  const btnNonMember = document.getElementById('btnNonMember');
+  if (btnMember) btnMember.onclick = () => switchView('member');
+  if (btnNonMember) btnNonMember.onclick = () => switchView('nonmember');
+  
+  // Auto-sync dengan storage event
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'shopInsightRealData' || e.key === 'forceDashboardRefresh') {
+      console.log('🔄 Produk: Data changed, reloading...');
+      loadData();
+    }
+  });
+  
+  // Tunggu Chart.js tersedia
+  function waitForChart(callback) {
+    if (typeof Chart !== 'undefined') {
+      callback();
+    } else {
+      setTimeout(() => waitForChart(callback), 100);
+    }
+  }
+  
+  waitForChart(() => {
+    loadData();
+  });
+  
+  // Periodic check setiap 3 detik
+  let lastDataLength = localStorage.getItem('shopInsightRealData')?.length || 0;
+  setInterval(() => {
+    const currentLength = localStorage.getItem('shopInsightRealData')?.length || 0;
+    if (currentLength !== lastDataLength) {
+      lastDataLength = currentLength;
+      console.log('🔄 Produk: Auto-detected data change, reloading...');
+      loadData();
+    }
+  }, 3000);
+  
+})();
+</script>
