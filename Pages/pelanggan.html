@@ -1,0 +1,375 @@
+<style>
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.metric-icon{font-size:18px;margin-bottom:8px}
+.metric-val{font-size:22px;font-weight:500;color:var(--text)}
+.metric-label{font-size:11px;color:var(--text2);margin-top:2px}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.metric.accent-blue .metric-icon{color:var(--accent)}
+.metric.accent-green .metric-icon{color:var(--accent2)}
+.metric.accent-orange .metric-icon{color:var(--accent3)}
+.metric.accent-purple .metric-icon{color:#a78bfa}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px}
+.chart-title i{font-size:12px;margin-right:4px}
+.bar-list{display:flex;flex-direction:column;gap:7px}
+.bar-item{display:flex;align-items:center;gap:8px;font-size:11px}
+.bar-label{width:100px;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-track{flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{width:65px;color:var(--text2);font-size:10px;text-align:left}
+.section-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px}
+.cmp-table th{font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp-table th:not(:first-child){text-align:center}
+.cmp-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text2)}
+.cmp-table td:not(:first-child){text-align:center;color:var(--text)}
+.cmp-table tr:last-child td{border-bottom:none}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.pill-blue{background:rgba(59,158,255,0.15);color:var(--accent)}
+.pill-green{background:rgba(0,212,160,0.15);color:var(--accent2)}
+.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;visibility:hidden}
+.loading-overlay.active{visibility:visible}
+.loading-spinner{width:40px;height:40px;border:3px solid #1e2d3d;border-top-color:#3b9eff;border-radius:50%;animation:spin 1s linear infinite}
+.error-message{background:rgba(255,107,74,0.15);border:1px solid #ff6b4a;border-radius:16px;padding:40px 20px;text-align:center;margin:40px auto;max-width:500px}
+.error-message i{font-size:48px;color:#ff6b4a;margin-bottom:16px;display:block}
+.error-message h4{color:#ff8a6b;font-size:16px;margin-bottom:8px}
+.error-message p{color:#8a9bb0;font-size:13px;margin-bottom:20px}
+.error-message button{background:#3b9eff;border:none;border-radius:10px;padding:10px 24px;color:#fff;font-size:13px;cursor:pointer;transition:all 0.2s}
+.error-message button:hover{background:#2a7fcc;transform:translateY(-1px)}
+</style>
+
+<div class="metrics">
+  <div class="metric accent-blue"><div class="metric-icon"><i class="ti ti-users"></i></div><div class="metric-val" id="totalPelanggan">0</div><div class="metric-label">Total Pelanggan</div><div class="metric-sub">orang</div></div>
+  <div class="metric accent-green"><div class="metric-icon"><i class="ti ti-gender-male"></i></div><div class="metric-val" id="persenPria">0%</div><div class="metric-label">Pria</div><div class="metric-sub" id="jumlahPria">0 dari 0 orang</div></div>
+  <div class="metric accent-orange"><div class="metric-icon"><i class="ti ti-clock"></i></div><div class="metric-val" id="rataUsia">0</div><div class="metric-label">Rata-rata Usia</div><div class="metric-sub">tahun</div></div>
+  <div class="metric accent-purple"><div class="metric-icon"><i class="ti ti-repeat"></i></div><div class="metric-val" id="avgPembelian">0</div><div class="metric-label">Rata-rata Riwayat Pembelian</div><div class="metric-sub">kali per pelanggan</div></div>
+</div>
+
+<div class="chart-grid-2">
+  <div class="chart-card">
+    <div class="chart-title"><i class="ti ti-chart-bar"></i> Kelompok usia</div>
+    <div style="position:relative;height:200px"><canvas id="c_age"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title"><i class="ti ti-gender-male"></i> <i class="ti ti-gender-female"></i> Gender</div>
+    <div style="position:relative;height:200px"><canvas id="c_gender"></canvas></div>
+  </div>
+</div>
+
+<div class="chart-grid-2">
+  <div class="chart-card">
+    <div class="chart-title"><i class="ti ti-chart-line"></i> Frekuensi pembelian</div>
+    <div class="bar-list" id="freqOverallContainer"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title"><i class="ti ti-chart-pie"></i> Komposisi Member vs Non-Member</div>
+    <div style="position:relative;height:200px"><canvas id="c_memberPie"></canvas></div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<div class="chart-card full" style="margin-bottom:14px">
+  <div class="chart-title"><i class="ti ti-table"></i> Perbandingan metrik utama — Member vs Non-Member</div>
+  <table class="cmp-table">
+    <thead><tr><th>Metrik</th><th>Member</th><th>Non-Member</th><th>Selisih</th></tr></thead>
+    <tbody id="cmpTableBody"></tbody>
+  </table>
+</div>
+
+<div class="chart-card full">
+  <div class="chart-title"><i class="ti ti-chart-pie"></i> Frekuensi belanja — member vs non-member</div>
+  <div style="position:relative;height:220px"><canvas id="c_freq"></canvas></div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<script>
+(function() {
+  let ageChart, genderChart, freqChart, memberPieChart;
+  
+  const freqLabels = ['Every 3 Mo', 'Annually', 'Quarterly', 'Monthly', 'Bi-Weekly', 'Fortnightly', 'Weekly'];
+  const freqMapping = {
+    "Every 3 Months": "Every 3 Mo",
+    "Annually": "Annually",
+    "Quarterly": "Quarterly",
+    "Monthly": "Monthly",
+    "Bi-Weekly": "Bi-Weekly",
+    "Fortnightly": "Fortnightly",
+    "Weekly": "Weekly"
+  };
+  
+  function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      if (show) overlay.classList.add('active');
+      else overlay.classList.remove('active');
+    }
+  }
+  
+  function showError() {
+    showLoading(false);
+    const container = document.querySelector('.metrics');
+    if (container) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.id = 'errorMessage';
+      errorDiv.innerHTML = `
+        <i class="ti ti-database-off"></i>
+        <h4>⚠️ Data Tidak Ditemukan</h4>
+        <p>Silakan buka halaman <strong>Manajemen Data</strong> terlebih dahulu untuk mengisi data pelanggan.</p>
+        <button onclick="location.reload()">Coba Refresh</button>
+      `;
+      container.parentNode.insertBefore(errorDiv, container.nextSibling);
+    }
+    
+    document.querySelectorAll('.metrics, .chart-grid-2, .chart-card, .section-divider').forEach(el => {
+      el.style.opacity = '0.3';
+      el.style.pointerEvents = 'none';
+    });
+  }
+  
+  function loadDataFromManajemen() {
+    showLoading(true);
+    
+    try {
+      let rawData = localStorage.getItem('shopInsightRealData');
+      
+      if (!rawData || rawData === 'undefined' || rawData === 'null') {
+        console.log('❌ Tidak ada data di localStorage');
+        showError();
+        return;
+      }
+      
+      let data = JSON.parse(rawData);
+      
+      if (!data || data.length === 0) {
+        console.log('❌ Data kosong');
+        showError();
+        return;
+      }
+      
+      console.log(`✅ Load ${data.length} data dari localStorage (Manajemen Data)`);
+      
+      const stats = calculateStats(data);
+      updateAllChartsAndMetrics(stats, data);
+      showLoading(false);
+      
+    } catch (error) {
+      console.error('Error parsing data:', error);
+      showError();
+    }
+  }
+  
+  function calculateStats(data) {
+    const totalPelanggan = data.length;
+    
+    const priaCount = data.filter(row => row.Gender === 'Male').length;
+    const persenPria = totalPelanggan > 0 ? Math.round(priaCount / totalPelanggan * 100) : 0;
+    
+    const totalUsia = data.reduce((sum, row) => sum + (row.Age || 0), 0);
+    const rataUsia = totalPelanggan > 0 ? (totalUsia / totalPelanggan).toFixed(1) : 0;
+    
+    const totalPembelian = data.reduce((sum, row) => sum + (row["Previous Purchases"] || 0), 0);
+    const avgPembelian = totalPelanggan > 0 ? (totalPembelian / totalPelanggan).toFixed(1) : 0;
+    
+    const memberData = data.filter(row => row["Subscription Status"] === 'Yes');
+    const totalMember = memberData.length;
+    
+    const memberPakeDiskon = memberData.filter(row => row["Discount Applied"] === 'Yes').length;
+    const persenMemberDiskon = totalMember > 0 ? Math.round(memberPakeDiskon / totalMember * 100) : 0;
+    
+    const nonMember = data.filter(row => row["Subscription Status"] !== 'Yes');
+    const totalNonMember = nonMember.length;
+    const nonMemberPakeDiskon = nonMember.filter(row => row["Discount Applied"] === 'Yes').length;
+    const persenNonMemberDiskon = totalNonMember > 0 ? (nonMemberPakeDiskon / totalNonMember * 100).toFixed(1) : 0;
+    
+    const avgMemberPembelian = memberData.length > 0 ? 
+      (memberData.reduce((sum, row) => sum + (row["Previous Purchases"] || 0), 0) / memberData.length).toFixed(1) : 0;
+    const avgNonMemberPembelian = nonMember.length > 0 ? 
+      (nonMember.reduce((sum, row) => sum + (row["Previous Purchases"] || 0), 0) / nonMember.length).toFixed(1) : 0;
+    
+    const memberPriaCount = memberData.filter(row => row.Gender === 'Male').length;
+    const memberPersenPria = totalMember > 0 ? Math.round(memberPriaCount / totalMember * 100) : 0;
+    
+    const usiaRanges = [
+      { min: 0, max: 25, label: '18-25' },
+      { min: 26, max: 35, label: '26-35' },
+      { min: 36, max: 45, label: '36-45' },
+      { min: 46, max: 55, label: '46-55' },
+      { min: 56, max: 200, label: '56+' }
+    ];
+    
+    const usiaDist = usiaRanges.map(range => 
+      data.filter(row => (row.Age || 0) >= range.min && (row.Age || 0) <= range.max).length
+    );
+    
+    const freqOverall = {};
+    freqLabels.forEach(label => { freqOverall[label] = 0; });
+    
+    data.forEach(row => {
+      const freq = row["Frequency of Purchases"];
+      const mapped = freqMapping[freq];
+      if (mapped) freqOverall[mapped]++;
+    });
+    const freqDistribution = freqLabels.map(label => freqOverall[label]);
+    
+    const memberFreqCount = {};
+    const nonMemberFreqCount = {};
+    freqLabels.forEach(label => {
+      memberFreqCount[label] = 0;
+      nonMemberFreqCount[label] = 0;
+    });
+    
+    memberData.forEach(row => {
+      const freq = row["Frequency of Purchases"];
+      const mapped = freqMapping[freq];
+      if (mapped) memberFreqCount[mapped]++;
+    });
+    
+    nonMember.forEach(row => {
+      const freq = row["Frequency of Purchases"];
+      const mapped = freqMapping[freq];
+      if (mapped) nonMemberFreqCount[mapped]++;
+    });
+    
+    const memberFreqPercent = freqLabels.map(label => 
+      totalMember > 0 ? (memberFreqCount[label] / totalMember * 100).toFixed(1) : 0
+    );
+    const nonMemberFreqPercent = freqLabels.map(label => 
+      totalNonMember > 0 ? (nonMemberFreqCount[label] / totalNonMember * 100).toFixed(1) : 0
+    );
+    
+    return {
+      totalPelanggan,
+      persenPria,
+      jumlahPria: priaCount,
+      jumlahWanita: totalPelanggan - priaCount,
+      rataUsia,
+      avgPembelian,
+      totalMember,
+      persenMemberDiskon,
+      persenNonMemberDiskon,
+      avgMemberPembelian,
+      avgNonMemberPembelian,
+      memberPersenPria,
+      usiaDist,
+      freqDistribution,
+      totalNonMember,
+      memberFreqPercent: memberFreqPercent.map(v => parseFloat(v)),
+      nonMemberFreqPercent: nonMemberFreqPercent.map(v => parseFloat(v))
+    };
+  }
+  
+  function updateAllChartsAndMetrics(stats, rawData) {
+    const tc = '#8a9bb0', gc = 'rgba(255,255,255,0.06)';
+    const co = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+    
+    document.getElementById('totalPelanggan').innerText = stats.totalPelanggan.toLocaleString();
+    document.getElementById('persenPria').innerText = stats.persenPria + '%';
+    document.getElementById('jumlahPria').innerHTML = `${stats.jumlahPria.toLocaleString()} dari ${stats.totalPelanggan.toLocaleString()} orang`;
+    document.getElementById('rataUsia').innerText = stats.rataUsia;
+    document.getElementById('avgPembelian').innerText = stats.avgPembelian;
+    
+    const maxFreq = Math.max(...stats.freqDistribution);
+    const freqContainer = document.getElementById('freqOverallContainer');
+    freqContainer.innerHTML = '';
+    freqLabels.forEach((label, i) => {
+      const val = stats.freqDistribution[i];
+      const percent = maxFreq > 0 ? (val / maxFreq) * 100 : 0;
+      const barColor = i < 2 ? 'var(--accent2)' : (i < 5 ? 'var(--accent)' : 'var(--text3)');
+      freqContainer.innerHTML += `
+        <div class="bar-item">
+          <span class="bar-label">${label}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${percent}%;background:${barColor}"></div></div>
+          <span class="bar-val">${val.toLocaleString()} orang</span>
+        </div>
+      `;
+    });
+    
+    const selisihDiskon = (stats.persenMemberDiskon - parseFloat(stats.persenNonMemberDiskon)).toFixed(1);
+    const selisihPembelian = (stats.avgMemberPembelian - stats.avgNonMemberPembelian).toFixed(1);
+    const genderText = `Pria ${stats.persenPria}%, Wanita ${100-stats.persenPria}%`;
+    
+    const memberAvgHarga = stats.totalMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]==='Yes').reduce((s,r)=>s+(r["Purchase Amount (USD)"]||0),0) / stats.totalMember).toFixed(2) : 0;
+    const nonMemberAvgHarga = stats.totalNonMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]!=='Yes').reduce((s,r)=>s+(r["Purchase Amount (USD)"]||0),0) / stats.totalNonMember).toFixed(2) : 0;
+    
+    const memberAvgRating = stats.totalMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]==='Yes').reduce((s,r)=>s+(r["Review Rating"]||0),0) / stats.totalMember).toFixed(2) : 0;
+    const nonMemberAvgRating = stats.totalNonMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]!=='Yes').reduce((s,r)=>s+(r["Review Rating"]||0),0) / stats.totalNonMember).toFixed(2) : 0;
+    
+    const memberAvgUsia = stats.totalMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]==='Yes').reduce((s,r)=>s+(r.Age||0),0) / stats.totalMember).toFixed(1) : 0;
+    const nonMemberAvgUsia = stats.totalNonMember > 0 ? 
+      (rawData.filter(r=>r["Subscription Status"]!=='Yes').reduce((s,r)=>s+(r.Age||0),0) / stats.totalNonMember).toFixed(1) : 0;
+    
+    const selisihJumlah = stats.totalMember - stats.totalNonMember;
+    const selisihJumlahText = selisihJumlah > 0 ? `+${selisihJumlah.toLocaleString()}` : (selisihJumlah < 0 ? `${selisihJumlah.toLocaleString()}` : 'sama');
+    
+    const tableBody = document.getElementById('cmpTableBody');
+    tableBody.innerHTML = `
+      <tr><td style="text-align:left">Jumlah pelanggan</td><td><span class="pill pill-blue">${stats.totalMember.toLocaleString()}</span></td><td>${stats.totalNonMember.toLocaleString()}</td><td style="color:var(--accent2)">${selisihJumlahText}</td></tr>
+      <tr><td style="text-align:left">Rata-rata pembelian</td><td>$${memberAvgHarga}</td><td>$${nonMemberAvgHarga}</td><td style="color:var(--accent3)">${(memberAvgHarga - nonMemberAvgHarga).toFixed(2)}</td></tr>
+      <tr><td style="text-align:left">Rata-rataRating</td><td>${memberAvgRating}</td><td>${nonMemberAvgRating}</td><td style="color:var(--text3)">${(memberAvgRating - nonMemberAvgRating).toFixed(2)}</td></tr>
+      <tr><td style="text-align:left">Riwayat pembelian</td><td><span class="pill pill-green">${stats.avgMemberPembelian}×</span></td><td>${stats.avgNonMemberPembelian}×</td><td style="color:var(--accent2)">+${selisihPembelian}</td></tr>
+      <tr><td style="text-align:left">Gunakan diskon</td><td><span class="pill pill-blue">${stats.persenMemberDiskon}%</span></td><td>${stats.persenNonMemberDiskon}%</td><td style="color:var(--accent)">+${selisihDiskon}%</td></tr>
+      <tr><td style="text-align:left">Gunakan promo code</td><td><span class="pill pill-blue">${stats.persenMemberDiskon}%</span></td><td>${stats.persenNonMemberDiskon}%</td><td style="color:var(--accent)">+${selisihDiskon}%</td></tr>
+      <tr><td style="text-align:left">Rata-rata usia</td><td>${memberAvgUsia} thn</td><td>${nonMemberAvgUsia} thn</td><td style="color:var(--text3)">${(memberAvgUsia - nonMemberAvgUsia).toFixed(1)}</td></tr>
+      <tr><td style="text-align:left">Gender dominan</td><td>Pria ${stats.memberPersenPria}%</td><td>${genderText}</td><td style="color:var(--accent3)">Gap gender</td></tr>
+    `;
+    
+    if (ageChart) ageChart.destroy();
+    ageChart = new Chart(document.getElementById('c_age'), {
+      type: 'bar',
+      data: { labels: ['18-25', '26-35', '36-45', '46-55', '56+'], datasets: [{ data: stats.usiaDist, backgroundColor: ['#4a5a6e', '#5b7a9e', '#3b9eff', '#3b9eff', '#00d4a0'], borderRadius: 5 }] },
+      options: { ...co, scales: { x: { ticks: { color: tc, font: { size: 11 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 10 }, callback: v => v.toLocaleString() }, grid: { color: gc } } } }
+    });
+    
+    if (genderChart) genderChart.destroy();
+    genderChart = new Chart(document.getElementById('c_gender'), {
+      type: 'doughnut',
+      data: { labels: ['Pria', 'Wanita'], datasets: [{ data: [stats.jumlahPria, stats.jumlahWanita], backgroundColor: ['#3b9eff', '#ff6b4a'], borderWidth: 0 }] },
+      options: { ...co, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { color: tc, font: { size: 11 }, boxWidth: 10 } } } }
+    });
+    
+    if (memberPieChart) memberPieChart.destroy();
+    memberPieChart = new Chart(document.getElementById('c_memberPie'), {
+      type: 'doughnut',
+      data: { labels: ['Member', 'Non-Member'], datasets: [{ data: [stats.totalMember, stats.totalNonMember], backgroundColor: ['#3b9eff', '#ff6b4a'], borderWidth: 0 }] },
+      options: { ...co, cutout: '60%', plugins: { legend: { display: true, position: 'bottom', labels: { color: tc, font: { size: 11 }, boxWidth: 10 } } } }
+    });
+    
+    const maxY = Math.max(...stats.memberFreqPercent, ...stats.nonMemberFreqPercent);
+    if (freqChart) freqChart.destroy();
+    freqChart = new Chart(document.getElementById('c_freq'), {
+      type: 'bar',
+      data: {
+        labels: freqLabels,
+        datasets: [
+          { label: 'Member (%)', data: stats.memberFreqPercent, backgroundColor: '#3b9eff', borderRadius: 4 },
+          { label: 'Non-Member (%)', data: stats.nonMemberFreqPercent, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 4 }
+        ]
+      },
+      options: { ...co, scales: { x: { ticks: { color: tc, font: { size: 9 }, maxRotation: 35 }, grid: { display: false } }, y: { min: 0, max: Math.ceil(maxY + 2), ticks: { color: tc, font: { size: 9 }, callback: v => v + '%' }, grid: { color: gc } } } }
+    });
+  }
+  
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'shopInsightRealData' || e.key === 'forceDashboardRefresh') {
+      console.log('🔄 Detected change, reloading...');
+      location.reload();
+    }
+  });
+  
+  loadDataFromManajemen();
+  
+})();
+</script>

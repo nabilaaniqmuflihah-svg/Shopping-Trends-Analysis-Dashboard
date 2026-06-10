@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:transparent;
+    color:#e8edf3;
+  }
+  
+  .data-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+    margin-bottom:24px;
+  }
+  .data-title h3{
+    font-family:'DM Serif Display',serif;
+    font-size:20px;
+    font-weight:400;
+    color:#fff;
+    margin-bottom:4px;
+  }
+  .data-title p{
+    font-size:13px;
+    color:#8a9bb0;
+  }
+  .data-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 16px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:500;
+    font-family:'DM Sans',sans-serif;
+    cursor:pointer;
+    transition:all 0.2s;
+    border:1px solid transparent;
+  }
+  .btn-primary{
+    background:#3b9eff;
+    color:#fff;
+    border-color:#3b9eff;
+  }
+  .btn-primary:hover{
+    background:#2a7fcc;
+    transform:translateY(-1px);
+  }
+  .btn-outline{
+    background:rgba(59,158,255,0.1);
+    border-color:rgba(59,158,255,0.3);
+    color:#3b9eff;
+  }
+  .btn-outline:hover{
+    background:rgba(59,158,255,0.2);
+  }
+  .btn-warning{
+    background:rgba(255,107,74,0.1);
+    border-color:rgba(255,107,74,0.3);
+    color:#ff6b4a;
+  }
+  .btn-warning:hover{
+    background:rgba(255,107,74,0.2);
+  }
+  .btn-sm{
+    padding:4px 10px;
+    font-size:12px;
+    gap:4px;
+  }
+  
+  .search-box{
+    display:flex;
+    align-items:center;
+    background:#0f1923;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px;
+    padding:6px 12px;
+    gap:8px;
+  }
+  .search-box input{
+    background:transparent;
+    border:none;
+    padding:6px 0;
+    font-size:13px;
+    color:#e8edf3;
+    width:200px;
+    outline:none;
+  }
+  .search-box input::placeholder{
+    color:#5a6b80;
+  }
+  
+  .stats-bar{
+    background:#1e2d3d;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:16px;
+    padding:12px 20px;
+    margin-bottom:20px;
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    font-size:13px;
+  }
+  .stat-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#8a9bb0;
+  }
+  .stat-badge strong{
+    color:#fff;
+    font-weight:600;
+  }
+  
+  .table-wrapper{
+    background:#1e2d3d;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:20px;
+    overflow-x:auto;
+    overflow-y:auto;
+    max-height:520px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    min-width:1000px;
+  }
+  th{
+    text-align:left;
+    padding:14px 12px;
+    background:#16212e;
+    color:#8a9bb0;
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    border-bottom:1px solid rgba(255,255,255,0.07);
+    position:sticky;
+    top:0;
+  }
+  td{
+    padding:12px;
+    color:#e8edf3;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  tr:hover td{
+    background:rgba(59,158,255,0.05);
+  }
+  
+  .pagination{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+    margin-top:20px;
+  }
+  .page-btn{
+    background:#0f1923;
+    border:1px solid rgba(255,255,255,0.07);
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:12px;
+    color:#8a9bb0;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .page-btn:hover{
+    background:#1e2d3d;
+    color:#fff;
+  }
+  
+  .modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.8);
+    backdrop-filter:blur(4px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    visibility:hidden;
+    opacity:0;
+    transition:all 0.2s;
+  }
+  .modal.active{
+    visibility:visible;
+    opacity:1;
+  }
+  .modal-card{
+    background:#1a2635;
+    border-radius:24px;
+    width:90%;
+    max-width:900px;
+    max-height:85vh;
+    overflow-y:auto;
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 25px 40px rgba(0,0,0,0.4);
+  }
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 24px;
+    border-bottom:1px solid rgba(255,255,255,0.07);
+  }
+  .modal-header h3{
+    font-family:'DM Serif Display',serif;
+    font-size:18px;
+    font-weight:400;
+    color:#fff;
+  }
+  .modal-header i{
+    font-size:20px;
+    cursor:pointer;
+    color:#8a9bb0;
+    transition:color 0.2s;
+  }
+  .modal-header i:hover{
+    color:#ff6b4a;
+  }
+  .modal-body{
+    padding:24px;
+  }
+  .form-section{
+    background:#0f1923;
+    border-radius:16px;
+    padding:16px 20px;
+    margin-bottom:20px;
+  }
+  .form-section h4{
+    font-size:13px;
+    font-weight:600;
+    color:#3b9eff;
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    text-transform:uppercase;
+    letter-spacing:0.3px;
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:14px;
+  }
+  .form-field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .form-field label{
+    font-size:11px;
+    font-weight:500;
+    color:#8a9bb0;
+    text-transform:uppercase;
+    letter-spacing:0.3px;
+  }
+  .form-field input,
+  .form-field select{
+    background:#1e2d3d;
+    border:1px solid rgba(255,255,255,0.07);
+    padding:10px 12px;
+    border-radius:10px;
+    color:#e8edf3;
+    font-size:13px;
+    font-family:'DM Sans',sans-serif;
+    outline:none;
+    transition:all 0.2s;
+  }
+  .form-field input:focus,
+  .form-field select:focus{
+    border-color:#3b9eff;
+  }
+  .form-field input:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+  
+  /* Tambahan style untuk input rating */
+  .form-field small{
+    font-size:10px;
+    color:#8a9bb0;
+    margin-top:2px;
+  }
+  .form-field input.error{
+    border-color:#ff6b4a;
+  }
+  
+  .modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    padding:16px 24px 24px;
+    border-top:1px solid rgba(255,255,255,0.07);
+  }
+  
+  .toast{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    background:#00d4a0;
+    color:#0f1923;
+    padding:10px 18px;
+    border-radius:40px;
+    font-size:13px;
+    font-weight:500;
+    z-index:1100;
+    animation:fadeInOut 2.5s ease;
+  }
+  .toast.error{
+    background:#ff6b4a;
+    color:#fff;
+  }
+  @keyframes fadeInOut{
+    0%{opacity:0;transform:translateY(20px);}
+    15%{opacity:1;transform:translateY(0);}
+    85%{opacity:1;transform:translateY(0);}
+    100%{opacity:0;transform:translateY(20px);}
+  }
+  
+  .empty-state{
+    text-align:center;
+    padding:60px;
+    color:#5a6b80;
+  }
+  .error-box{
+    text-align:center;
+    padding:60px;
+  }
+  .error-box i{
+    font-size:48px;
+    color:#ff6b4a;
+    margin-bottom:16px;
+    display:block;
+  }
+  .error-box h4{
+    color:#ff8a6b;
+    margin-bottom:8px;
+    font-size:16px;
+  }
+  .error-box p{
+    color:#8a9bb0;
+    font-size:13px;
+  }
+  
+  .loading-state{
+    text-align:center;
+    padding:60px;
+    color:#8a9bb0;
+  }
+  .loading-spinner{
+    width:40px;
+    height:40px;
+    border:3px solid #1e2d3d;
+    border-top-color:#3b9eff;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="loading-state" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Memuat data dari shopping_trends_updated.csv...</p>
+</div>
+
+<div id="dashboard-content" style="display:none">
+<div class="data-header">
+    <div class="data-title">
+      <h3>Manajemen Data</h3>
+      <p>Kelola dataset transaksi — tambah, edit, atau hapus data</p>
+    </div>
+    <div class="data-actions">
+      <div class="search-box">
+        <i class="ti ti-search" style="color:#5a6b80; font-size:16px;"></i>
+        <input type="text" id="searchInput" placeholder="Cari data...">
+      </div>
+      <button class="btn btn-primary" id="addNewBtn"><i class="ti ti-plus"></i>Tambah Data</button>
+      <button class="btn btn-warning" id="resetDataBtn"><i class="ti ti-reload"></i>Reset ke CSV</button>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="statsContainer"></div>
+
+  <div class="table-wrapper">
+    <table id="dataTable">
+      <thead id="tableHeader"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="paginationControls"></div>
+</div>
+
+<div id="dataModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalTitle">Tambah Data</h3>
+      <i class="ti ti-x" id="closeModalBtn"></i>
+    </div>
+    <form id="modalForm" onsubmit="return false;"></form>
+  </div>
+</div>
+
+<script>
+(function() {
+  // SEMUA VARIABEL DIBUNGKUS DALAM IIFE AGAR TIDAK BENTROK DENGAN INDEX.HTML
+  
+  const COLUMNS = [
+    "Customer ID", "Age", "Gender", "Item Purchased", "Category",
+    "Purchase Amount (USD)", "Location", "Size", "Color", "Season",
+    "Review Rating", "Subscription Status", "Shipping Type", "Discount Applied",
+    "Promo Code Used", "Previous Purchases", "Payment Method", "Frequency of Purchases"
+  ];
+
+  const COLUMN_DISPLAY = {
+    "Customer ID": "ID", "Age": "Usia", "Gender": "Jenis Kelamin",
+    "Item Purchased": "Item", "Category": "Kategori", "Purchase Amount (USD)": "Harga",
+    "Location": "Lokasi", "Size": "Ukuran", "Color": "Warna", "Season": "Musim",
+    "Review Rating": "Rating", "Subscription Status": "Status Member", "Shipping Type": "Pengiriman",
+    "Discount Applied": "Diskon", "Promo Code Used": "Kode Promo", "Previous Purchases": "Beli Sebelumnya",
+    "Payment Method": "Metode Bayar", "Frequency of Purchases": "Frekuensi"
+  };
+
+  let dropdownOptions = {
+    Gender: ["Male", "Female"],
+    Size: ["XS", "S", "M", "L", "XL", "XXL"],
+    Season: ["Spring", "Summer", "Fall", "Winter"],
+    "Subscription Status": ["Yes", "No"],
+    "Discount Applied": ["Yes", "No"],
+    "Promo Code Used": ["No", "Yes"],
+    "Payment Method": ["Credit Card", "Debit Card", "PayPal", "Cash", "Bank Transfer", "Venmo"],
+    "Frequency of Purchases": ["Weekly", "Bi-Weekly", "Monthly", "Quarterly", "Annually", "Fortnightly", "Every 3 Months"],
+    "Shipping Type": ["Standard", "Express", "Free Shipping", "2-Day Shipping", "Store Pickup", "Next Day Air"],
+    "Category": ["Clothing", "Footwear", "Accessories", "Outerwear"],
+    "Location": ["New York", "California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "North Carolina", "Michigan", "Virginia", "Washington", "Arizona", "Massachusetts", "Tennessee", "Missouri", "Maryland", "Colorado", "Indiana", "Minnesota", "Wisconsin", "New Jersey", "South Carolina", "Kentucky", "Oregon", "Alabama", "Louisiana", "Connecticut", "Utah", "Nevada", "Iowa", "Arkansas", "Mississippi", "Kansas", "New Mexico", "Nebraska", "West Virginia", "Idaho", "Maine", "New Hampshire","Hawaii", "Rhode Island","Delaware","South Dakota","North Dakota","Montana","Alaska","Vermont","Wyoming"]
+  };
+
+  const displayLabels = {
+    Gender: { "Male": "Pria", "Female": "Wanita" },
+    "Subscription Status": { "Yes": "Ya", "No": "Tidak" },
+    "Discount Applied": { "Yes": "Ya", "No": "Tidak" },
+    "Promo Code Used": { "Yes": "Ya", "No": "Tidak" },
+    "Color": {
+      "Black": "Hitam",
+      "White": "Putih",
+      "Red": "Merah",
+      "Blue": "Biru",
+      "Green": "Hijau",
+      "Yellow": "Kuning",
+      "Purple": "Ungu",
+      "Pink": "Merah Muda",
+      "Brown": "Coklat",
+      "Gray": "Abu-abu",
+      "Grey": "Abu-abu",
+      "Orange": "Oranye",
+      "Navy": "Biru Tua",
+      "Maroon": "Merah Marun",
+      "Beige": "Krem",
+      "Cyan": "Cyan",
+      "Magenta": "Magenta",
+      "Lavender": "Lavender",
+      "Olive": "Olive",
+      "Coral": "Koral",
+      "Teal": "Teal",
+      "Gold": "Gold",
+      "Silver": "Silver",
+      "Bronze": "Bronze"
+    }
+  };
+
+  let mainData = [];
+  let currentPage = 1;
+  let rowsPerPage = 12;
+  let searchTerm = "";
+  let editIndex = null;
+  let loadError = false;
+
+  function notifyDataChange() {
+    localStorage.setItem('forceDashboardRefresh', Date.now());
+    console.log('📢 Notifikasi perubahan data dikirim ke halaman Beranda');
+    if (window.parent && window.parent.refreshDashboardData) {
+      window.parent.refreshDashboardData();
+    }
+  }
+
+  function generateNewCustomerID() {
+    const existingIDs = mainData.map(row => row["Customer ID"]).filter(id => id && String(id).startsWith("CUST_"));
+    let maxNum = 3900;
+    for (const id of existingIDs) {
+      const num = parseInt(String(id).replace("CUST_", ""));
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+    return `CUST_${maxNum + 1}`;
+  }
+
+  async function loadRealCSV() {
+    try {
+      const stored = localStorage.getItem("shopInsightRealData");
+      if (stored) {
+        mainData = JSON.parse(stored);
+        console.log(`✅ Load ${mainData.length} data dari localStorage`);
+        loadError = false;
+        return true;
+      }
+
+      let csvText = null;
+      let usedPath = '';
+      
+      const paths = [
+        '../shopping_trends_updated.csv',
+        '../../shopping_trends_updated.csv',
+        'shopping_trends_updated.csv',
+        '/shopping_trends_updated.csv',
+        '../data/shopping_trends_updated.csv',
+      ];
+      
+      for (const path of paths) {
+        try {
+          const response = await fetch(path, { cache: 'no-store' });
+          if (response.ok) {
+            csvText = await response.text();
+            usedPath = path;
+            console.log(`✅ CSV ditemukan di: ${path}`);
+            break;
+          }
+        } catch (e) {}
+      }
+      
+      if (!csvText) throw new Error("CSV tidak ditemukan");
+      
+      const lines = csvText.trim().split(/\r?\n/);
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      
+      const data = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((header, idx) => {
+          let val = values[idx] || '';
+          if (header === "Age" || header === "Previous Purchases") val = parseInt(val) || 0;
+          else if (header === "Purchase Amount (USD)" || header === "Review Rating") val = parseFloat(val) || 0;
+          row[header] = val;
+        });
+        data.push(row);
+      }
+      
+      mainData = data;
+      localStorage.setItem("shopInsightRealData", JSON.stringify(mainData));
+      loadError = false;
+      return true;
+      
+    } catch (error) {
+      console.error("❌ Gagal load CSV:", error);
+      loadError = true;
+      showCSVNotFoundError();
+      return false;
+    }
+  }
+
+  function showCSVNotFoundError() {
+    const loadingState = document.getElementById('loading-state');
+    if (loadingState) {
+      loadingState.innerHTML = `
+        <div class="error-box">
+          <i class="ti ti-file-dislike"></i>
+          <h4>⚠️ File CSV Tidak Ditemukan</h4>
+          <p>Pastikan file <strong>shopping_trends_updated.csv</strong> berada di folder yang benar</p>
+          <button onclick="location.reload()" style="margin-top:16px;padding:8px 16px;background:#3b9eff;border:none;border-radius:8px;color:#fff;cursor:pointer;">Coba Refresh</button>
+        </div>
+      `;
+    }
+    const dashboardContent = document.getElementById("dashboard-content");
+    if (dashboardContent) dashboardContent.style.display = "none";
+  }
+
+  function parseCSVLine(line) {
+    const result = [];
+    let inQuotes = false;
+    let current = '';
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+      else current += char;
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  function getFilteredData() {
+    if (!searchTerm.trim()) return [...mainData];
+    const term = searchTerm.toLowerCase();
+    return mainData.filter(row => {
+      return Object.values(row).some(v => String(v).toLowerCase().includes(term));
+    });
+  }
+
+  function formatCell(val, col) {
+    if (val === undefined || val === "") return "—";
+    if (col === "Review Rating") return `⭐ ${val}`;
+    if (col === "Purchase Amount (USD)") return `$${val}`;
+    
+    // Label Bahasa Indonesia untuk kolom tertentu
+    if (col === "Gender") {
+      return val === "Male" ? "Pria" : (val === "Female" ? "Wanita" : val);
+    }
+    if (col === "Subscription Status") {
+      return val === "Yes" ? "Ya" : (val === "No" ? "Tidak" : val);
+    }
+    if (col === "Discount Applied") {
+      return val === "Yes" ? "Ya" : (val === "No" ? "Tidak" : val);
+    }
+    if (col === "Promo Code Used") {
+      return val === "Yes" ? "Ya" : (val === "No" ? "Tidak" : val);
+    }
+    
+    // 🔥 TAMBAHKAN INI untuk warna
+    if (col === "Color") {
+      if (displayLabels.Color && displayLabels.Color[val]) {
+        return displayLabels.Color[val];
+      }
+      return val;
+    }
+    
+    if (String(val).length > 25) return String(val).substring(0,22)+"...";
+    return val;
+  }
+
+  function renderTable() {
+    if (loadError) return;
+    
+    const loadingState = document.getElementById('loading-state');
+    const dashboardContent = document.getElementById('dashboard-content');
+    if (loadingState) loadingState.style.display = 'none';
+    if (dashboardContent) dashboardContent.style.display = 'block';
+    
+    const filtered = getFilteredData();
+    const totalPages = Math.ceil(filtered.length / rowsPerPage);
+    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+    const pageData = filtered.slice((currentPage-1)*rowsPerPage, currentPage*rowsPerPage);
+    
+    const tableHeader = document.getElementById("tableHeader");
+    if (tableHeader) {
+      tableHeader.innerHTML = `
+        <tr>
+          ${COLUMNS.map(col => `<th>${COLUMN_DISPLAY[col] || col}</th>`).join('')}
+          <th style="width:80px; text-align:center;">Aksi</th>
+        </tr>
+      `;
+    }
+    
+    const tbody = document.getElementById("tableBody");
+    if (tbody) {
+      if (pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${COLUMNS.length+1}" class="empty-state">Tidak ada data yang ditemukan</td></tr>`;
+      } else {
+        tbody.innerHTML = pageData.map((row, idx) => {
+          const globalIdx = (currentPage-1)*rowsPerPage + idx;
+          return `
+            <tr>
+              ${COLUMNS.map(col => `<td>${formatCell(row[col], col)}</td>`).join('')}
+              <td style="text-align:center; white-space:nowrap;">
+                <button class="btn btn-sm edit-btn" data-idx="${globalIdx}" style="background:rgba(59,158,255,0.1); border-color:rgba(59,158,255,0.3); margin-right:6px;"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-sm btn-warning delete-btn" data-idx="${globalIdx}"><i class="ti ti-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+    
+    const totalRevenue = filtered.reduce((sum, row) => sum + (row["Purchase Amount (USD)"] || 0), 0);
+    const statsContainer = document.getElementById("statsContainer");
+    if (statsContainer) {
+      statsContainer.innerHTML = `
+        <div class="stat-badge"><i class="ti ti-database"></i> Total: <strong>${mainData.length.toLocaleString()}</strong> transaksi</div>
+        <div class="stat-badge"><i class="ti ti-filter"></i> Filter: <strong>${filtered.length.toLocaleString()}</strong> data</div>
+        <div class="stat-badge"><i class="ti ti-currency-dollar"></i> Nilai: <strong>$${totalRevenue.toLocaleString()}</strong></div>
+      `;
+    }
+    
+    const paginationDiv = document.getElementById("paginationControls");
+    if (paginationDiv) {
+      if (totalPages <= 1) {
+        paginationDiv.innerHTML = "";
+      } else {
+        paginationDiv.innerHTML = `
+          <span style="font-size:12px; color:#8a9bb0;">Halaman ${currentPage} dari ${totalPages}</span>
+          ${currentPage > 1 ? '<button class="page-btn" data-page="prev"><i class="ti ti-chevron-left"></i> Prev</button>' : ''}
+          ${currentPage < totalPages ? '<button class="page-btn" data-page="next">Next <i class="ti ti-chevron-right"></i></button>' : ''}
+        `;
+        document.querySelectorAll(".page-btn").forEach(btn => {
+          btn.onclick = () => {
+            currentPage += btn.dataset.page === "prev" ? -1 : 1;
+            renderTable();
+          };
+        });
+      }
+    }
+    
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.onclick = () => {
+        const idx = parseInt(btn.dataset.idx);
+        if (confirm("Hapus data ini?")) {
+          mainData.splice(idx, 1);
+          localStorage.setItem("shopInsightRealData", JSON.stringify(mainData));
+          if (getFilteredData().length === 0 && currentPage > 1) currentPage--;
+          renderTable();
+          showToast("Data berhasil dihapus");
+          notifyDataChange();
+        }
+      };
+    });
+    
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+      btn.onclick = () => openEditModal(parseInt(btn.dataset.idx));
+    });
+  }
+
+  function validateRating(value) {
+    const rating = parseFloat(value);
+    if (isNaN(rating)) return false;
+    return rating >= 1 && rating <= 5;
+  }
+
+  function makeSelectIndo(fieldId, selectedValue, options) {
+    return `<select id="${fieldId}">${options.map(opt => {
+      let displayText = opt;
+      if (displayLabels[fieldId] && displayLabels[fieldId][opt]) {
+        displayText = displayLabels[fieldId][opt];
+      }
+      return `<option value="${opt}" ${selectedValue === opt ? 'selected' : ''}>${displayText}</option>`;
+    }).join('')}</select>`;
+  }
+
+  function generateForm(data) {
+    const isEdit = editIndex !== null;
+    const get = (f, d="") => data[f] !== undefined && data[f] !== "" ? data[f] : d;
+    let customerIDValue = isEdit ? get("Customer ID") : generateNewCustomerID();
+    
+    return `
+      <div class="modal-body">
+        <div class="form-section">
+          <h4><i class="ti ti-id"></i> ID & Demografi</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Customer ID</label><input type="text" id="Customer ID" value="${customerIDValue}" ${!isEdit ? 'disabled' : ''}></div>
+            <div class="form-field"><label>Usia</label><input type="number" id="Age" value="${get("Age", "")}" min="15" max="80"></div>
+            <div class="form-field"><label>Jenis Kelamin</label>${makeSelectIndo("Gender", get("Gender", ""), dropdownOptions.Gender)}</div>
+            <div class="form-field"><label>Lokasi</label>${makeSelectIndo("Location", get("Location", ""), dropdownOptions.Location)}</div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h4><i class="ti ti-package"></i> Item & Kategori</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Item</label><input type="text" id="Item Purchased" value="${escapeHtml(get("Item Purchased"))}" required></div>
+            <div class="form-field"><label>Kategori</label>${makeSelectIndo("Category", get("Category", ""), dropdownOptions.Category)}</div>
+            <div class="form-field"><label>Ukuran</label>${makeSelectIndo("Size", get("Size", ""), dropdownOptions.Size)}</div>
+            <div class="form-field"><label>Warna</label><input type="text" id="Color" value="${escapeHtml(get("Color", ""))}"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h4><i class="ti ti-chart-bar"></i> Harga & Rating</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Harga (USD)</label><input type="number" step="0.01" id="Purchase Amount (USD)" value="${get("Purchase Amount (USD)", "")}" min="0"></div>
+            <div class="form-field"><label>Rating</label>
+              <input type="number" step="0.1" id="Review Rating" value="${get("Review Rating", "")}" min="1" max="5" placeholder="1 - 5">
+              <small>⭐ Nilai rating di antara 1 - 5</small>
+            </div>
+            <div class="form-field"><label>Beli Sebelumnya</label><input type="number" id="Previous Purchases" value="${get("Previous Purchases", "")}" min="0"></div>
+            <div class="form-field"><label>Frekuensi</label>${makeSelectIndo("Frequency of Purchases", get("Frequency of Purchases", "Monthly"), dropdownOptions["Frequency of Purchases"])}</div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h4><i class="ti ti-ticket"></i> Langganan & Diskon</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Status Member</label>${makeSelectIndo("Subscription Status", get("Subscription Status", ""), dropdownOptions["Subscription Status"])}</div>
+            <div class="form-field"><label>Diskon</label>${makeSelectIndo("Discount Applied", get("Discount Applied", ""), dropdownOptions["Discount Applied"])}</div>
+            <div class="form-field"><label>Kode Promo</label>${makeSelectIndo("Promo Code Used", get("Promo Code Used", ""), dropdownOptions["Promo Code Used"])}</div>
+            <div class="form-field"><label>Metode Bayar</label>${makeSelectIndo("Payment Method", get("Payment Method", ""), dropdownOptions["Payment Method"])}</div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h4><i class="ti ti-truck"></i> Pengiriman & Musim</h4>
+          <div class="form-grid">
+            <div class="form-field"><label>Tipe Pengiriman</label>${makeSelectIndo("Shipping Type", get("Shipping Type", ""), dropdownOptions["Shipping Type"])}</div>
+            <div class="form-field"><label>Musim</label>${makeSelectIndo("Season", get("Season", ""), dropdownOptions.Season)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancelModalBtn" type="button">Batal</button>
+        <button class="btn btn-primary" id="saveDataBtn" type="button">Simpan</button>
+      </div>
+    `;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  function openAddModal() {
+    if (loadError) return;
+    editIndex = null;
+    const modalTitle = document.getElementById("modalTitle");
+    const modalForm = document.getElementById("modalForm");
+    if (modalTitle) modalTitle.innerHTML = "Tambah Data";
+    if (modalForm) modalForm.innerHTML = generateForm({});
+    const dataModal = document.getElementById("dataModal");
+    if (dataModal) dataModal.classList.add("active");
+    attachModalEvents();
+  }
+  
+  function openEditModal(idx) {
+    if (loadError) return;
+    editIndex = idx;
+    const modalTitle = document.getElementById("modalTitle");
+    const modalForm = document.getElementById("modalForm");
+    if (modalTitle) modalTitle.innerHTML = "Edit Data";
+    if (modalForm) modalForm.innerHTML = generateForm(mainData[idx]);
+    const dataModal = document.getElementById("dataModal");
+    if (dataModal) dataModal.classList.add("active");
+    attachModalEvents();
+  }
+
+  function attachModalEvents() {
+    const closeBtn = document.getElementById("closeModalBtn");
+    if (closeBtn) closeBtn.onclick = closeModal;
+    const cancelBtn = document.getElementById("cancelModalBtn");
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    const saveBtn = document.getElementById("saveDataBtn");
+    if (saveBtn) saveBtn.onclick = saveDataFromModal;
+  }
+  
+  function saveDataFromModal() {
+    const newRow = {};
+    let ratingValid = true;
+    
+    for (const col of COLUMNS) {
+      const element = document.getElementById(col);
+      if (element) {
+        let val = element.value;
+        if (col === "Age" || col === "Previous Purchases") val = parseInt(val) || 0;
+        else if (col === "Purchase Amount (USD)" || col === "Review Rating") val = parseFloat(val) || 0;
+        
+        // Validasi rating
+        if (col === "Review Rating") {
+          if (val < 1 || val > 5 || isNaN(val)) {
+            ratingValid = false;
+            element.classList.add('error');
+            element.focus();
+          } else {
+            element.classList.remove('error');
+          }
+        }
+        
+        newRow[col] = val;
+      }
+    }
+    
+    if (!ratingValid) {
+      showToast("⚠️ Rating harus bernilai antara 1 - 5", true);
+      return;
+    }
+    
+    if (!newRow["Item Purchased"]) {
+      alert("Item Purchased wajib diisi!");
+      return;
+    }
+    
+    if (editIndex === null) {
+      newRow["Customer ID"] = generateNewCustomerID();
+      mainData.push(newRow);
+      showToast(`✅ Data berhasil ditambahkan (ID: ${newRow["Customer ID"]})`);
+    } else {
+      newRow["Customer ID"] = mainData[editIndex]["Customer ID"];
+      mainData[editIndex] = newRow;
+      showToast("✅ Data berhasil diperbarui");
+    }
+    
+    localStorage.setItem("shopInsightRealData", JSON.stringify(mainData));
+    notifyDataChange();
+    closeModal();
+    renderTable();
+  }
+
+  function resetToCSV() {
+    if (loadError) {
+      location.reload();
+      return;
+    }
+    if (confirm("Reset ke data CSV asli? Semua perubahan akan hilang.")) {
+      localStorage.removeItem("shopInsightRealData");
+      loadRealCSV().then(() => {
+        currentPage = 1;
+        searchTerm = "";
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) searchInput.value = "";
+        renderTable();
+        showToast("✅ Data berhasil direset ke CSV asli");
+        notifyDataChange();
+      });
+    }
+  }
+  
+  function closeModal() {
+    const dataModal = document.getElementById("dataModal");
+    if (dataModal) dataModal.classList.remove("active");
+    editIndex = null;
+  }
+  
+  function showToast(msg, isError = false) {
+    const toast = document.createElement("div");
+    toast.className = "toast" + (isError ? " error" : "");
+    toast.innerHTML = `<i class="ti ti-${isError ? 'alert-circle' : 'check'}" style="margin-right:6px;"></i>${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  const addBtn = document.getElementById("addNewBtn");
+  if (addBtn) addBtn.onclick = openAddModal;
+  
+  const resetBtn = document.getElementById("resetDataBtn");
+  if (resetBtn) resetBtn.onclick = resetToCSV;
+  
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      searchTerm = e.target.value;
+      currentPage = 1;
+      renderTable();
+    };
+  }
+  
+  window.onclick = (e) => {
+    const dataModal = document.getElementById("dataModal");
+    if (e.target === dataModal) closeModal();
+  };
+  
+  loadRealCSV().then(() => renderTable());
+})();
+</script>
+</body>
+</html>
